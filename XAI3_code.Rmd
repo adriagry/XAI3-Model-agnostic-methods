@@ -53,3 +53,29 @@ print(pdp_hum)
 print(pdp_wind)
 
 ```
+
+Part 2 - bidimensional PDP
+
+```{r, echo = TRUE}
+#generating data for 2D PDP
+#we take a random sample n = 100
+sampled_data <- model_data[sample(nrow(model_data), 100), ]
+
+pdp_2d <- partial(rf_bike_model, 
+                 pred.var = c("temp", "hum"), 
+                 grid.resolution = 50,
+                 train = sampled_data)
+
+#Visualization using geom_tile()
+plot_2d <- ggplot(pdp_2d, aes(x = temp, y = hum)) +
+  geom_tile(aes(fill = yhat), width = 1.5, height = 5) +
+  scale_fill_gradientn(colours = rev(terrain.colors(10)), name = "Predicted cnt") +
+  geom_rug(data = sampled_data, aes(x = temp, y = hum), sides = "bl", alpha = 0.5) +
+  theme_minimal() +
+  labs(title = "temperature and humidity interaction",
+       x = "Temperature",
+       y = "Humidity")
+
+print(plot_2d)
+
+```
