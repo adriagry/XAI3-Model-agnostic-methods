@@ -4,3 +4,52 @@ author: "Adrianna Gryc"
 output: html_document
 ---
 
+Part 1 - one dimensional PDP
+
+```{r, echo = TRUE}
+library(randomForest)
+library(pdp)
+library(ggplot2)
+library(dplyr)
+
+bike_data <- read.csv("C:/Users/Ada/Desktop/Ada studia/EDM/Practica 3 Sin sol/Bike-Sharing-Dataset/day.csv", stringsAsFactors = FALSE)
+
+bike_data <- bike_data %>%
+  mutate(
+    temp = temp * (39 - (-8)) + (-8),      
+    hum = hum * 100,                        
+    windspeed = windspeed * 67,         
+    days_since_2011 = as.numeric(as.Date(dteday) - as.Date("2011-01-01"))
+  )
+
+features <- c("days_since_2011", "temp", "hum", "windspeed")
+model_data <- bike_data[, c(features, "cnt")]
+
+#training random forest model
+set.seed(42) 
+rf_bike_model <- randomForest(cnt ~ ., data = model_data, ntree = 500)
+
+#PDP
+plot_pdp <- function(feature_name, title_label, x_label) {
+  pd_data <- partial(rf_bike_model, pred.var = feature_name, plot = FALSE)
+  
+  ggplot(pd_data, aes_string(x = feature_name, y = "yhat")) +
+    geom_line(color = "blue", linewidth = 1) +
+    geom_point(color = "darkblue", alpha = 0.5) +
+    theme_minimal() +
+    labs(title = paste("Feature influence:", title_label),
+         x = x_label,
+         y = "Prediction")
+}
+
+pdp_days  <- plot_pdp("days_since_2011", "Time lapse", "Days since 01.01.2011")
+pdp_temp  <- plot_pdp("temp", "Temperature", "Temperature")
+pdp_hum   <- plot_pdp("hum", "Humidity", "Humidity")
+pdp_wind  <- plot_pdp("windspeed", "Wind speed", "Wind speed")
+
+print(pdp_days)
+print(pdp_temp)
+print(pdp_hum)
+print(pdp_wind)
+
+```
